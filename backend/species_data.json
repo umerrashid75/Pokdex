@@ -1,0 +1,137 @@
+{
+  "goldfish": {
+    "name": "Goldfish",
+    "type": "Fish",
+    "dex_entry": "A domesticated species prized for its shimmering scales. It dwells in still, freshwater environments and senses the world through lateral-line vibration receptors. Highly social—it thrives in the company of its own kind."
+  },
+  "white_shark": {
+    "name": "Great White Shark",
+    "type": "Fish",
+    "dex_entry": "An apex marine predator whose electroreceptors can detect a single heartbeat from fifty meters away. Its jaws cycle through thousands of teeth over a lifetime. Few creatures command the ocean with such ancient authority."
+  },
+  "stingray": {
+    "name": "Stingray",
+    "type": "Fish",
+    "dex_entry": "A cartilaginous glider of the ocean shallows. Its venomous barbed tail is purely defensive. It buries itself in sandy sediment, lying perfectly still, invisible to the untrained eye."
+  },
+  "hen": {
+    "name": "Hen",
+    "type": "Bird",
+    "dex_entry": "A highly domesticated avian with an elaborate social hierarchy known as the 'pecking order.' Despite flightlessness, it communicates through over thirty distinct vocalizations and is an attentive guardian of its young."
+  },
+  "ostrich": {
+    "name": "Ostrich",
+    "type": "Bird",
+    "dex_entry": "The largest living bird on Earth. Though it cannot take flight, it compensates with ground speed exceeding 70 km/h. Its powerful kick can prove fatal to predators. It possesses the largest eyes of any land vertebrate."
+  },
+  "brambling": {
+    "name": "Brambling",
+    "type": "Bird",
+    "dex_entry": "A small migratory finch that journeys thousands of kilometers between seasons. Its striking orange-and-black plumage brightens the winter woodlands it inhabits. It gathers in enormous, swirling flocks to roost."
+  },
+  "peacock": {
+    "name": "Peacock",
+    "type": "Bird",
+    "dex_entry": "A spectacular avian whose ornate tail feathers, known as a 'train,' contain iridescent eyespots used in elaborate courtship displays. The male fans its plumage to attract a mate, rotating slowly to catch the light."
+  },
+  "lorikeet": {
+    "name": "Rainbow Lorikeet",
+    "type": "Bird",
+    "dex_entry": "A highly nomadic parrot species that follows flowering trees across vast distances. Its brush-tipped tongue is specially adapted to harvest nectar and pollen. Its vibrant plumage makes camouflage nearly impossible."
+  },
+  "toucan": {
+    "name": "Toucan",
+    "type": "Bird",
+    "dex_entry": "Its oversized bill is remarkably lightweight—a hollow structure of keratin and bone. Beyond foraging, it serves as a sophisticated thermoregulatory organ, radiating body heat. A bold and curious creature of the forest canopy."
+  },
+  "american_egret": {
+    "name": "Great Egret",
+    "type": "Bird",
+    "dex_entry": "A master of patience. It stands motionless in shallow water for extended periods before striking with blinding speed to spear fish. During breeding season, wispy plumes known as 'aigrettes' adorn its back."
+  },
+  "tabby": {
+    "name": "Tabby Cat",
+    "type": "Mammal",
+    "dex_entry": "One of the most widespread felids on Earth. Its M-shaped facial marking is a genetic constant across all tabby patterns. A solitary and crepuscular hunter, it sees in near-total darkness thanks to a tapetum lucidum behind its retinas."
+  },
+  "Persian_cat": {
+    "name": "Persian Cat",
+    "type": "Mammal",
+    "dex_entry": "A pampered and placid breed characterized by its luxuriously long coat and brachycephalic skull. Originally from the mountains of Persia, it now thrives as an indoor companion. It communicates with a notably soft, melodic voice."
+  },
+  "Siamese_cat": {
+    "name": "Siamese Cat",
+    "type": "Mammal",
+    "dex_entry": "One of the oldest and most recognizable cat breeds. Its distinctive color points—darker fur on the face, ear, paws, and tail—are caused by a temperature-sensitive pigment enzyme. Known for its assertive, vocal personality."
+  },
+  "Labrador_retriever": {
+    "name": "Labrador Retriever",
+    "type": "Mammal",
+    "dex_entry": "Originally bred to retrieve waterfowl in the frigid waters of Newfoundland, this canid possesses a water-resistant double coat and a rudder-like tail. Among the most intelligent and trainable dogs ever catalogued."
+  },
+  "golden_retriever": {
+    "name": "Golden Retriever",
+    "type": "Mammal",
+    "dex_entry": "A highly social and empathetic canid. Its 'soft mouth' instinct allows it to carry objects without causing damage—a relic of its bird-retrieving ancestry. Its emotional intelligence rivals that of many primates."
+  },
+  "German_shepherd": {
+    "name": "German Shepherd",
+    "type": "Mammal",
+    "dex_entry": "A working breed with extraordinary olfactory capability—its sense of smell is 10,000 times more acute than a human's. Originally bred to herd sheep, it now serves in roles ranging from search-and-rescue to law enforcement."
+  },
+  "African_elephant": {
+    "name": "African Elephant",
+    "type": "Mammal",
+    "dex_entry": "The largest land creature alive today. Its trunk contains over 40,000 distinct muscle fascicles, granting it the dexterity to pick a single blade of grass or uproot a full-grown tree. They mourn their dead—a rare behavior in the animal kingdom."
+  },
+  "giant_panda": {
+    "name": "Giant Panda",
+    "type": "Mammal",
+    "dex_entry": "A bear adapted almost entirely to a bamboo diet despite having the digestive system of a carnivore. Its distinctive black-and-white markings may aid in camouflage against snowy and shadowed bamboo forests. A solitary and famously elusive wanderer."
+  },
+  "brown_bear": {
+    "name": "Brown Bear",
+    "type": "Mammal",
+    "dex_entry": "A powerful omnivore capable of consuming up to 20,000 calories per day before hibernation. Its fatty reserves can sustain it through five months of winter sleep with no food or water. It locates salmon runs via acute smell from kilometers away."
+  },
+  "tiger": {
+    "name": "Tiger",
+    "type": "Mammal",
+    "dex_entry": "The largest of all wild cats. Each individual's stripe pattern is as unique as a fingerprint. It is one of the few big cats comfortable in water, actively swimming to cool down and cross rivers in pursuit of prey."
+  },
+  "cheetah": {
+    "name": "Cheetah",
+    "type": "Mammal",
+    "dex_entry": "The fastest land animal on Earth, capable of reaching 112 km/h in under three seconds. Unlike other big cats, it cannot roar—instead it purrs. Its semi-retractable claws function like cleats, gripping the ground for explosive acceleration."
+  },
+  "lion": {
+    "name": "Lion",
+    "type": "Mammal",
+    "dex_entry": "The only truly social big cat, living in groups called prides. The male's mane darkens with age and testosterone levels, signaling dominance. Its roar can be heard from 8 kilometers and is used to broadcast territorial boundaries."
+  },
+  "fox": {
+    "name": "Red Fox",
+    "type": "Mammal",
+    "dex_entry": "A cunning and adaptable canid found on every continent except Antarctica. It uses Earth's magnetic field as a targeting system when pouncing on prey buried beneath snow. Its bushy tail serves as both a rudder during high-speed turns and a warm blanket."
+  },
+  "wolf": {
+    "name": "Gray Wolf",
+    "type": "Mammal",
+    "dex_entry": "Apex predator and keystone species. Wolf packs operate with complex social hierarchies; howling serves as long-range communication that can carry over 10 kilometers. The reintroduction of a single wolf pack is known to reshape entire ecosystems."
+  },
+  "cobra": {
+    "name": "King Cobra",
+    "type": "Reptile",
+    "dex_entry": "The longest venomous snake in the world. It can stand tall enough to look a human in the eye and deliver enough neurotoxin in a single bite to kill an elephant. Remarkably, it feeds almost exclusively on other snakes."
+  },
+  "green_lizard": {
+    "name": "Green Lizard",
+    "type": "Reptile",
+    "dex_entry": "A fast-moving, territorial reptile whose vivid coloration serves as both camouflage and a signal of health to potential mates. It regulates its body temperature by precisely positioning itself relative to sunlight throughout the day."
+  },
+  "bald_eagle": {
+    "name": "Bald Eagle",
+    "type": "Bird",
+    "dex_entry": "A formidable avian predator with vision four times sharper than a human's. It can spot a fish from nearly 2 kilometers away. Its talons lock on impact with a grip force of 400 psi—ten times that of a human hand."
+  }
+}
