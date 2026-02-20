@@ -1,225 +1,274 @@
 """
-Smart Pokedex – FastAPI Backend
-================================
-POST /v1/scan  →  Accepts an image, runs ResNet50 inference,
-                  returns {label, confidence, type, dex_entry}.
+backend/main.py  –  Smart Pokédex API
+======================================
+POST /v1/scan  – accept an image, return species + Pokédex lore
+
+Model loading priority (checked on startup):
+  1. pokedex_classifier.pth + class_labels.json   → your fine-tuned ResNet50
+  2. pokedex_gpt2/                                → your fine-tuned GPT-2 (lore)
+  3. Fallback: stock ResNet50 (ImageNet) + static species_data.json lore
 """
 
-from __future__ import annotations
-
-import json
-import logging
+import json, logging, re
 from contextlib import asynccontextmanager
-from io import BytesIO
 from pathlib import Path
-from typing import Any
+from io import BytesIO
 
 import torch
-import torchvision.models as models
-import torchvision.transforms as T
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
+import torch.nn.functional as F
+from torchvision import models, transforms
 from PIL import Image
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("pokedex")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 
-# ---------------------------------------------------------------------------
-# ImageNet class labels (1000 classes)
-# torchvision ships with a helper that downloads them once.
-# We fall back to downloading via urllib if the helper isn't available.
-# ---------------------------------------------------------------------------
-def _load_imagenet_labels() -> list[str]:
-    """Return the 1000 ImageNet class name strings."""
+# ── Paths ──────────────────────────────────────────────────────
+BASE_DIR             = Path(__file__).parent
+CUSTOM_WEIGHTS       = BASE_DIR / "pokedex_classifier.pth"
+CUSTOM_LABELS        = BASE_DIR / "class_labels.json"
+GPT2_DIR             = BASE_DIR / "pokedex_gpt2"
+SPECIES_DATA_PATH    = BASE_DIR / "species_data.json"
+IMAGENET_LABELS_PATH = BASE_DIR / "imagenet_classes.txt"
+
+# Shared state (populated in lifespan)
+state: dict = {}
+
+# ── Pre-processing (same for both models) ─────────────────────
+PREPROCESS = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                         std =[0.229, 0.224, 0.225]),
+])
+
+
+def _load_classifier() -> tuple:
+    """Load fine-tuned ResNet50 if available, else stock ImageNet model."""
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    if CUSTOM_WEIGHTS.exists() and CUSTOM_LABELS.exists():
+        log.info("⚡ Loading fine-tuned ResNet50 from %s …", CUSTOM_WEIGHTS.name)
+        ckpt         = torch.load(CUSTOM_WEIGHTS, map_location=device)
+        num_classes  = ckpt["num_classes"]
+        idx_to_class = {int(k): v for k, v in ckpt["class_labels"].items()}
+
+        net = models.resnet50(weights=None)
+        net.fc = torch.nn.Sequential(
+            torch.nn.Dropout(0.45),
+            torch.nn.Linear(net.fc.in_features, num_classes),
+        )
+        net.load_state_dict(ckpt["model_state"])
+        net.to(device).eval()
+        log.info("✅ Fine-tuned model loaded (%d classes, val_acc=%.1f%%)",
+                 num_classes, ckpt.get("val_acc", 0) * 100)
+        return net, idx_to_class, device, "custom"
+
+    # ── Fallback: stock ImageNet ResNet50 ─────────────────────
+    log.info("⚡ Loading stock ResNet50 (ImageNet fallback) …")
+    net = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+    net.to(device).eval()
+
+    # Load human-readable ImageNet labels
+    if IMAGENET_LABELS_PATH.exists():
+        with open(IMAGENET_LABELS_PATH) as f:
+            idx_to_class = {i: l.strip() for i, l in enumerate(f)}
+    else:
+        # Fetch from torchvision's built-in meta
+        idx_to_class = {i: v["label"] for i, v in
+                        models.ResNet50_Weights.IMAGENET1K_V2.meta["categories"].items()
+                        if isinstance(i, int)} if hasattr(
+            models.ResNet50_Weights.IMAGENET1K_V2.meta.get("categories", {}), "items"
+        ) else {}
+        # Simple fallback
+        if not idx_to_class:
+            cats = models.ResNet50_Weights.IMAGENET1K_V2.meta["categories"]
+            idx_to_class = {i: c for i, c in enumerate(cats)}
+
+    log.info("✅ ImageNet labels loaded (%d classes)", len(idx_to_class))
+    return net, idx_to_class, device, "imagenet"
+
+
+def _load_gpt2():
+    """Load fine-tuned GPT-2 if available."""
+    if not GPT2_DIR.exists():
+        return None, None
     try:
-        from torchvision.models._api import get_model_weights  # noqa: F401  (just a probe)
-    except ImportError:
-        pass
-
-    # Use the well-known synset list bundled with torchvision examples
-    import urllib.request, urllib.error  # noqa: E401
-
-    url = (
-        "https://raw.githubusercontent.com/pytorch/hub/master/"
-        "imagenet_classes.txt"
-    )
-    try:
-        with urllib.request.urlopen(url, timeout=10) as resp:
-            return [line.strip() for line in resp.read().decode().splitlines()]
-    except urllib.error.URLError:
-        pass
-
-    # Hard fallback – first 1000 indices named numerically so the app
-    # still runs offline (lore lookup will use the generic template).
-    return [f"class_{i}" for i in range(1000)]
+        from transformers import GPT2LMHeadModel, GPT2TokenizerFast
+        log.info("⚡ Loading fine-tuned GPT-2 from %s …", GPT2_DIR)
+        tokenizer = GPT2TokenizerFast.from_pretrained(str(GPT2_DIR))
+        model     = GPT2LMHeadModel.from_pretrained(str(GPT2_DIR))
+        model.eval()
+        log.info("✅ GPT-2 lore model loaded")
+        return model, tokenizer
+    except Exception as e:
+        log.warning("GPT-2 load failed (%s) – using static lore fallback", e)
+        return None, None
 
 
-# ---------------------------------------------------------------------------
-# App state (model + data loaded once at startup)
-# ---------------------------------------------------------------------------
-class AppState:
-    model: torch.nn.Module
-    labels: list[str]
-    species_db: dict[str, Any]
-    transform: T.Compose
+def _load_static_lore() -> dict:
+    if SPECIES_DATA_PATH.exists():
+        with open(SPECIES_DATA_PATH) as f:
+            entries = json.load(f)
+        log.info("📖 Static species DB loaded (%d entries)", len(entries))
+        return {e["name"].lower(): e for e in entries}
+    return {}
 
 
-state = AppState()
+# ── GPT-2 lore generation ──────────────────────────────────────
+def _generate_lore(animal_name: str, gpt2_model, tokenizer) -> str:
+    prompt = f"<ANIMAL>{animal_name}</ANIMAL><ENTRY>"
+    enc    = tokenizer(prompt, return_tensors="pt")
+    with torch.no_grad():
+        out = gpt2_model.generate(
+            **enc,
+            max_new_tokens     = 120,
+            do_sample          = True,
+            temperature        = 0.82,
+            top_p              = 0.92,
+            repetition_penalty = 1.15,
+            pad_token_id       = tokenizer.eos_token_id,
+        )
+    text  = tokenizer.decode(out[0], skip_special_tokens=True)
+    entry = text.split("<ENTRY>")[-1].split("</ENTRY>")[0].strip()
+    # Clean up any trailing partial sentence
+    sentences = re.split(r'(?<=[.!?])\s', entry)
+    cleaned   = " ".join(sentences[:-1]) if len(sentences) > 1 else entry
+    return cleaned or entry
 
-SPECIES_DB_PATH = Path(__file__).parent / "species_data.json"
 
-IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD  = [0.229, 0.224, 0.225]
-
-
+# ── Lifespan ───────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load model + data on startup; clean up on shutdown."""
-    log.info("⚡ Loading ResNet-50 …")
-    state.model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
-    state.model.eval()
+    net, idx_to_class, device, model_type = _load_classifier()
+    gpt2_model, tokenizer                 = _load_gpt2()
+    static_lore                           = _load_static_lore()
 
-    state.labels = _load_imagenet_labels()
-    log.info(f"✅ ImageNet labels loaded ({len(state.labels)} classes)")
-
-    with SPECIES_DB_PATH.open() as f:
-        state.species_db = json.load(f)
-    log.info(f"📖 Species DB loaded ({len(state.species_db)} entries)")
-
-    state.transform = T.Compose([
-        T.Resize(256),
-        T.CenterCrop(224),
-        T.ToTensor(),
-        T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-    ])
-
-    yield  # ← server runs here
-
+    state.update({
+        "net":          net,
+        "idx_to_class": idx_to_class,
+        "device":       device,
+        "model_type":   model_type,
+        "gpt2":         gpt2_model,
+        "tokenizer":    tokenizer,
+        "static_lore":  static_lore,
+    })
+    log.info("🟢 Pokédex ready  [classifier=%s  lore=%s]",
+             model_type, "gpt2" if gpt2_model else "static")
+    yield
     log.info("🔴 Shutting down …")
+    state.clear()
 
 
-# ---------------------------------------------------------------------------
-# FastAPI app
-# ---------------------------------------------------------------------------
-app = FastAPI(
-    title="Smart Pokedex API",
-    version="1.0.0",
-    lifespan=lifespan,
-)
+# ── App ────────────────────────────────────────────────────────
+app = FastAPI(title="Smart Pokédex API", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # tighten in production
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
 
 
-# ---------------------------------------------------------------------------
-# Helper
-# ---------------------------------------------------------------------------
-def _clean_label(raw: str) -> str:
-    """
-    ImageNet labels look like 'n02099601 golden_retriever'.
-    Return just 'golden_retriever'.
-    """
-    parts = raw.split(" ", 1)
-    return parts[1] if len(parts) == 2 else raw
+# ── Type mapping helpers ───────────────────────────────────────
+ANIMAL_TYPE_MAP = {
+    # predators / carnivores
+    **{a: "predator" for a in ["lion","tiger","leopard","cheetah","jaguar","wolf",
+                               "hyena","eagle","hawk","falcon","shark","crocodile",
+                               "orca","barracuda","lynx","coyote","fox"]},
+    # mammals
+    **{a: "mammal"   for a in ["elephant","gorilla","orangutan","chimpanzee","bear",
+                               "panda","koala","kangaroo","whale","dolphin","seal",
+                               "otter","deer","horse","cow","pig","sheep","goat",
+                               "dog","cat","rabbit","rat","mouse","hamster",
+                               "squirrel","raccoon","bat","hedgehog","badger",
+                               "wombat","possum","reindeer","bison","donkey","ox",
+                               "hippopotamus","rhinoceros","giraffe"]},
+    # bugs
+    **{a: "bug"      for a in ["bee","beetle","butterfly","caterpillar","cockroach",
+                               "dragonfly","fly","grasshopper","ladybugs","mosquito",
+                               "moth","porcupine","ant","wasp","termite"]},
+    # aquatic
+    **{a: "aquatic"  for a in ["goldfish","lobster","crab","jellyfish","octopus",
+                               "seahorse","squid","starfish","oyster","penguin",
+                               "pelican","duck","goose","flamingo","swan"]},
+    # reptile
+    **{a: "reptile"  for a in ["lizard","snake","turtle","crocodile","gecko",
+                               "iguana","chameleon"]},
+    # bird
+    **{a: "bird"     for a in ["eagle","owl","parrot","pigeon","sparrow","crow",
+                               "woodpecker","hummingbird","hornbill","sandpiper",
+                               "turkey","pelecan","flamingo","duck","goose","swan","penguin"]},
+}
+
+def _guess_type(name: str) -> str:
+    return ANIMAL_TYPE_MAP.get(name.lower(), "normal")
 
 
-def _lookup_lore(clean_label: str) -> dict[str, str]:
-    """
-    Try to find a lore entry. The DB keys use underscores and lower-case.
-    We try several normalized variants before giving up.
-    """
-    variants = [
-        clean_label,
-        clean_label.lower(),
-        clean_label.replace("-", "_"),
-    ]
-    for v in variants:
-        if v in state.species_db:
-            entry = state.species_db[v]
-            return {
-                "name": entry["name"],
-                "type": entry["type"],
-                "dex_entry": entry["dex_entry"],
-            }
-
-    # Generic fallback
-    display_name = clean_label.replace("_", " ").title()
-    return {
-        "name": display_name,
-        "type": "Unknown",
-        "dex_entry": (
-            f"A remarkable creature known as the {display_name}. "
-            "Little is known about this species in the Pokedex archives. "
-            "Field researchers continue to study its behaviour and habitat."
-        ),
-    }
-
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
-@app.get("/", tags=["Health"])
+@app.get("/")
 async def root():
-    return {"status": "online", "message": "Smart Pokedex API is running."}
-
-
-@app.post("/v1/scan", tags=["Inference"])
-async def scan(file: UploadFile = File(...)):
-    """
-    Accept an image file, run ResNet-50 inference, and return Pokedex data.
-
-    Returns
-    -------
-    {
-        "label": "golden_retriever",
-        "display_name": "Golden Retriever",
-        "type": "Mammal",
-        "confidence": 0.94,
-        "dex_entry": "..."
+    return {
+        "status":     "online",
+        "classifier": state.get("model_type", "unknown"),
+        "lore":       "gpt2" if state.get("gpt2") else "static",
     }
-    """
-    # --- Validate content type ---
+
+
+@app.post("/v1/scan")
+async def scan(file: UploadFile = File(...)):
     if not file.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=415,
-            detail=f"Unsupported file type: {file.content_type}. Send an image.",
-        )
+        raise HTTPException(400, "File must be an image")
 
-    # --- Read & decode ---
-    raw_bytes = await file.read()
     try:
-        img = Image.open(BytesIO(raw_bytes)).convert("RGB")
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Cannot decode image: {exc}")
+        data  = await file.read()
+        img   = Image.open(BytesIO(data)).convert("RGB")
+    except Exception:
+        raise HTTPException(400, "Could not decode image")
 
-    # --- Preprocess ---
-    tensor = state.transform(img).unsqueeze(0)  # [1, 3, 224, 224]
-
-    # --- Inference ---
+    # ── Inference ─────────────────────────────────────────────
+    tensor = PREPROCESS(img).unsqueeze(0).to(state["device"])
     with torch.no_grad():
-        logits = state.model(tensor)             # [1, 1000]
-        probs  = torch.softmax(logits, dim=1)
-        top_prob, top_idx = probs.topk(1, dim=1)
+        logits = state["net"](tensor)
+        probs  = F.softmax(logits, dim=1)
+        conf, idx = probs[0].max(0)
 
-    raw_label = state.labels[top_idx.item()]
-    label     = _clean_label(raw_label)
-    confidence = round(float(top_prob.item()), 4)
+    raw_name   = state["idx_to_class"].get(idx.item(), "Unknown")
+    # Capitalise and clean ImageNet-style names (e.g. "tabby_cat" → "Tabby Cat")
+    clean_name = raw_name.replace("_", " ").title()
+    confidence = round(conf.item() * 100, 1)
 
-    lore = _lookup_lore(label)
+    log.info("🔍 Scanned → %s (%.1f%%)", clean_name, confidence)
 
-    log.info(f"🔍 Scanned → {label} ({confidence*100:.1f}%)")
+    # ── Lore generation ───────────────────────────────────────
+    gpt2      = state.get("gpt2")
+    tokenizer = state.get("tokenizer")
+
+    if gpt2 and tokenizer:
+        lore = _generate_lore(clean_name, gpt2, tokenizer)
+        lore_source = "gpt2"
+    else:
+        # Static JSON fallback
+        static = state.get("static_lore", {})
+        entry  = static.get(clean_name.lower())
+        if not entry:
+            # Fuzzy: first word match
+            first = clean_name.lower().split()[0]
+            entry = next((v for k, v in static.items() if first in k), None)
+        if entry:
+            lore = entry.get("description", "Data not found in Pokédex.")
+        else:
+            lore = (f"{clean_name} is a fascinating creature whose full data entry "
+                    f"has yet to be catalogued. Train the GPT-2 model for richer entries.")
+        lore_source = "static"
+
+    animal_type = _guess_type(clean_name)
 
     return {
-        "label":        label,
-        "display_name": lore["name"],
-        "type":         lore["type"],
-        "confidence":   confidence,
-        "dex_entry":    lore["dex_entry"],
+        "name":       clean_name,
+        "type":       animal_type,
+        "confidence": confidence,
+        "lore":       lore,
+        "lore_source": lore_source,
+        "model":      state.get("model_type", "unknown"),
     }
