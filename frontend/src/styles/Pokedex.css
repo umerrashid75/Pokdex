@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════════════════
-   Pokedex.css  –  Smart Pokédex UI
-   Full custom stylesheet: plastic hardware shell, scanlines,
-   LED glow, D-pad, Pokéball intro, DexEntry panel, typewriter.
+   Pokedex.css  –  Pixel Art Pokédex UI
+   8-bit / chunky pixel aesthetic matching retro sprite style
 ═══════════════════════════════════════════════════════ */
 
 /* ── Google Fonts are loaded in index.html ── */
@@ -10,23 +9,27 @@
    CSS Custom Properties
 ════════════════════ */
 :root {
-  /* Pokédex red palette */
+  /* Pokédex pixel palette – flat, no gradients */
   --dex-red: #CC0000;
-  --dex-red-light: #E53935;
-  --dex-red-dark: #8B0000;
-  --dex-red-shadow: #5a0000;
+  --dex-red-light: #EE2222;
+  --dex-red-dark: #880000;
+  --dex-red-shadow: #440000;
+  --dex-outline: #111111;
 
   /* Screen */
   --screen-bg: #1a2230;
-  --screen-border: #c8c8c8;
+  --screen-bezel: #c0c0c0;
+  --screen-bezel-dark: #888888;
   --screen-inner-bg: #101820;
 
   /* Accents */
-  --blue-lens: #1565C0;
-  --blue-lens-light: #42A5F5;
-  --green-bar: #27AE60;
-  --green-bar-light: #2ECC71;
-  --yellow-dot: #F1C40F;
+  --blue-lens: #1155CC;
+  --blue-lens-light: #3388FF;
+  --blue-btn: #2255CC;
+  --green-bar: #22AA44;
+  --green-bar-light: #33CC55;
+  --yellow-btn: #FFCC00;
+  --yellow-btn-dark: #BB8800;
 
   /* Text */
   --text-primary: #e8f4e8;
@@ -56,16 +59,31 @@ html,
 body {
   height: 100%;
   overflow: hidden;
-  background: #0a0a0a;
+  background: var(--dex-red-dark);
   font-family: var(--font-ui);
-  -webkit-font-smoothing: antialiased;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+}
+
+@media (min-width: 768px) {
+
+  html,
+  body {
+    background: #111111;
+  }
 }
 
 #root {
   height: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+}
+
+@media (min-width: 768px) {
+  #root {
+    align-items: center;
+  }
 }
 
 /* ════════════════════
@@ -80,13 +98,19 @@ body {
   position: relative;
 }
 
+.app-root.is-desktop {
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 0;
+}
+
 /* ════════════════════════════════════════
    ████  POKÉBALL INTRO  ████
 ════════════════════════════════════════ */
 .pokeball-intro-backdrop {
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse at center, #1a0000 0%, #000 70%);
+  background: #000;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -101,9 +125,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  image-rendering: pixelated;
 }
 
-/* Top half */
+/* Top half – flat red, pixel border */
 .pokeball-half {
   width: 180px;
   height: 90px;
@@ -115,8 +140,8 @@ body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, #e53935 30%, #8B0000 100%);
-  box-shadow: inset -8px -8px 20px rgba(0, 0, 0, 0.4);
+  background: #CC0000;
+  border: 4px solid #111;
   position: absolute;
   top: 0;
   left: 0;
@@ -127,8 +152,8 @@ body {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 60%, #f5f5f5 30%, #bdbdbd 100%);
-  box-shadow: inset -8px 8px 20px rgba(0, 0, 0, 0.25);
+  background: #eeeeee;
+  border: 4px solid #111;
   position: absolute;
   bottom: 0;
   left: 0;
@@ -138,7 +163,7 @@ body {
 .pokeball-band {
   width: 100%;
   height: 12px;
-  background: #1a1a1a;
+  background: #111;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -151,19 +176,17 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #fff 20%, #bbb 100%);
-  border: 5px solid #1a1a1a;
+  background: #dddddd;
+  border: 5px solid #111;
   position: absolute;
   z-index: 3;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 
-/* Flash burst */
 .pokeball-flash {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%);
+  background: rgba(255, 255, 255, 0.85);
   pointer-events: none;
 }
 
@@ -174,10 +197,8 @@ body {
   color: #CC0000;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  text-shadow: 0 0 12px rgba(204, 0, 0, 0.8);
 }
 
-/* ── Tap to Start overlay ── */
 .tap-to-start {
   position: absolute;
   inset: 0;
@@ -187,165 +208,167 @@ body {
   justify-content: center;
   gap: 0;
   pointer-events: none;
-  /* click handled by backdrop */
 }
 
-/* Faint ghosted Pokéball behind the text */
 .tap-pokeball-bg {
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 38%, rgba(180, 20, 20, 0.18) 0%, rgba(80, 0, 0, 0.08) 55%, transparent 75%);
-  border: 3px solid rgba(180, 20, 20, 0.15);
+  background: transparent;
+  border: 3px solid rgba(180, 20, 20, 0.2);
   position: absolute;
 }
 
 .tap-label {
   font-family: var(--font-pixel);
   font-size: 0.62rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.8);
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  text-shadow: 0 0 18px rgba(204, 0, 0, 0.7), 0 0 4px rgba(0, 0, 0, 0.9);
   position: relative;
   z-index: 1;
   margin-top: 130px;
-  /* sits below the faint circle */
   user-select: none;
 }
 
 /* ════════════════════════════════════════
    ████  POKÉDEX SHELL  ████
+   Pixel-art chunky rectangle
 ════════════════════════════════════════ */
 .dex-shell {
-  width: min(380px, 95vw);
-  max-height: 98vh;
+  width: 100vw;
+  height: auto;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(160deg, var(--dex-red-light) 0%, var(--dex-red) 40%, var(--dex-red-dark) 100%);
-  border-radius: 28px 28px 18px 18px;
-  box-shadow:
-    0 0 0 3px var(--dex-red-shadow),
-    0 20px 60px rgba(0, 0, 0, 0.8),
-    inset 0 2px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.3);
-  padding: 18px 18px 14px;
-  gap: 12px;
+  /* Flat red – no gradient */
+  background: var(--dex-red);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 14px 14px 16px;
+  gap: 10px;
   position: relative;
   overflow: hidden;
+  /* Hard pixel outline */
+  outline: 4px solid var(--dex-outline);
 }
 
-/* Plastic texture highlight */
+/* Desktop: centred device with pixel border */
+@media (min-width: 768px) {
+  .dex-shell {
+    width: min(340px, 95vw);
+    height: auto;
+    max-height: 92vh;
+    /* Chunky pixel corners */
+    border-radius: 8px 8px 6px 6px;
+    /* Layered pixel shadow: right+bottom offset only */
+    box-shadow:
+      4px 4px 0 var(--dex-red-shadow),
+      8px 8px 0 var(--dex-red-dark),
+      0 0 0 4px var(--dex-outline);
+  }
+}
+
+/* No pseudo shine – pixel art is flat */
 .dex-shell::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
-  border-radius: 28px 28px 0 0;
-  pointer-events: none;
+  display: none;
 }
 
-/* ── Top Panel (lens + dots) ── */
+/* ── Top Panel (lens + dot indicators) ── */
 .dex-top-panel {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 0 4px;
+  gap: 12px;
+  padding: 0 2px;
 }
 
-/* Blue Lens */
+/* Blue Lens – flat circle with pixel border */
 .dex-lens {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--blue-lens-light), var(--blue-lens) 60%, #0D47A1);
-  border: 4px solid rgba(255, 255, 255, 0.25);
+  background: var(--blue-lens);
+  /* Hard pixel ring */
+  border: 4px solid var(--dex-outline);
   box-shadow:
-    0 0 0 3px var(--dex-red-dark),
-    0 0 16px rgba(66, 165, 245, 0.6),
-    inset 0 4px 8px rgba(255, 255, 255, 0.2),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
+    0 0 0 2px #4477ee,
+    inset 0 0 0 6px var(--blue-lens-light);
   position: relative;
   flex-shrink: 0;
 }
 
 .dex-lens-inner {
   position: absolute;
-  inset: 8px;
+  inset: 6px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #90CAF9, var(--blue-lens) 70%);
+  background: var(--blue-lens-light);
 }
 
+/* Small white glare dot – pixel style */
 .dex-lens-glare {
   position: absolute;
-  top: 8px;
-  left: 10px;
-  width: 14px;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.55);
+  top: 7px;
+  left: 9px;
+  width: 10px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.7);
   border-radius: 50%;
-  transform: rotate(-35deg);
 }
 
-/* Dot indicators */
+/* Dot indicators – flat circles */
 .dex-dots {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .dex-dot {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
-  box-shadow: 0 0 6px currentColor;
+  border: 2px solid var(--dex-outline);
+  /* No glow – pixel art is flat */
+  box-shadow: none;
 }
 
 .dex-dot-red {
-  background: #FF1744;
-  color: #FF1744;
+  background: #FF2222;
 }
 
 .dex-dot-yellow {
-  background: var(--yellow-dot);
-  color: var(--yellow-dot);
+  background: #FFCC00;
 }
 
 .dex-dot-green {
-  background: #00E676;
-  color: #00E676;
+  background: #22DD44;
 }
 
-/* ── Screen Bezel ── */
+/* ── Screen Bezel – pixel silver border ── */
 .dex-screen-bezel {
-  background: linear-gradient(180deg, #d0d0d0 0%, #b8b8b8 100%);
-  border-radius: 14px;
-  padding: 10px;
+  /* Flat silver, chunky pixel border */
+  background: var(--screen-bezel);
+  border-radius: 4px;
+  padding: 6px;
+  border: 3px solid var(--dex-outline);
   box-shadow:
-    inset 0 3px 6px rgba(0, 0, 0, 0.35),
-    inset 0 -2px 4px rgba(255, 255, 255, 0.5),
-    0 2px 0 rgba(0, 0, 0, 0.3);
+    3px 3px 0 var(--screen-bezel-dark),
+    0 0 0 1px var(--dex-outline);
 }
 
 .dex-screen {
   background: var(--screen-bg);
-  border-radius: 8px;
+  border-radius: 2px;
   overflow: hidden;
   position: relative;
   aspect-ratio: 4/3;
-  box-shadow:
-    inset 0 0 20px rgba(0, 0, 0, 0.8),
-    inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  border: 2px solid var(--dex-outline);
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.7);
 }
 
-/* Small red LEDs above screen content */
+/* Small LED dots above screen */
 .dex-screen-dots {
   display: flex;
-  gap: 6px;
-  padding: 5px 8px 2px;
+  gap: 5px;
+  padding: 4px 6px 2px;
   position: absolute;
   top: 0;
   left: 0;
@@ -356,8 +379,8 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #FF1744;
-  box-shadow: 0 0 5px #FF1744;
+  background: #FF2222;
+  border: 1px solid var(--dex-outline);
   animation: blink-dot 2.5s ease-in-out infinite;
 }
 
@@ -380,8 +403,7 @@ body {
 .dex-screen-content {
   position: absolute;
   inset: 0;
-  top: 18px;
-  /* below the dot row */
+  top: 16px;
   overflow: hidden;
 }
 
@@ -418,56 +440,51 @@ body {
   z-index: 5;
 }
 
-/* Reticle crosshair during scanning */
+/* Pixel-style reticle corners */
 .scan-reticle {
   position: absolute;
   inset: 15%;
   border: 2px solid rgba(0, 255, 136, 0.7);
   z-index: 6;
-  animation: reticle-pulse 0.8s ease-in-out infinite alternate;
+  animation: reticle-pulse 0.8s step-end infinite alternate;
 }
 
 .scan-reticle::before,
 .scan-reticle::after {
   content: '';
   position: absolute;
-  background: rgba(0, 255, 136, 0.7);
+  background: transparent;
 }
 
-/* Corner markers */
 .scan-reticle::before {
   top: -2px;
   left: -2px;
-  width: 14px;
-  height: 14px;
-  border-top: 2px solid rgba(0, 255, 136, 1);
-  border-left: 2px solid rgba(0, 255, 136, 1);
-  background: transparent;
+  width: 12px;
+  height: 12px;
+  border-top: 3px solid #00ff88;
+  border-left: 3px solid #00ff88;
 }
 
 .scan-reticle::after {
   bottom: -2px;
   right: -2px;
-  width: 14px;
-  height: 14px;
-  border-bottom: 2px solid rgba(0, 255, 136, 1);
-  border-right: 2px solid rgba(0, 255, 136, 1);
-  background: transparent;
+  width: 12px;
+  height: 12px;
+  border-bottom: 3px solid #00ff88;
+  border-right: 3px solid #00ff88;
 }
 
 @keyframes reticle-pulse {
   from {
-    border-color: rgba(0, 255, 136, 0.5);
-    box-shadow: 0 0 6px rgba(0, 255, 136, 0.2);
+    border-color: rgba(0, 255, 136, 0.4);
   }
 
   to {
     border-color: rgba(0, 255, 136, 1);
-    box-shadow: 0 0 18px rgba(0, 255, 136, 0.5);
   }
 }
 
-/* Camera permission error */
+/* Camera error */
 .cam-error {
   display: flex;
   flex-direction: column;
@@ -488,69 +505,71 @@ body {
 
 /* ════════════════════
    Controls Row
+   Layout: [Blue Btn] [Green Bar] [D-pad]
 ════════════════════ */
 .dex-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
+  padding: 0 4px;
+  gap: 8px;
 }
 
 .dex-controls-left {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
-/* ── A-Button (Scan) ── */
+/* ── A-Button (Scan) – pixel style blue circle ── */
 .dex-a-btn {
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 32%, #FF5252 0%, #CC0000 55%, #8B0000 100%);
-  border: none;
+  background: var(--blue-btn);
+  border: 3px solid var(--dex-outline);
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
   line-height: 1;
+  /* Pixel-style offset shadow */
   box-shadow:
-    0 5px 0 #5a0000,
-    0 8px 16px rgba(0, 0, 0, 0.5),
-    inset 0 2px 4px rgba(255, 255, 255, 0.2),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.4);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+    3px 3px 0 #113399,
+    0 0 0 1px var(--dex-outline);
+  transition: transform 0.08s steps(1), box-shadow 0.08s steps(1);
   position: relative;
 }
 
 .dex-a-btn:hover:not(:disabled) {
-  background: radial-gradient(circle at 38% 32%, #FF6E6E 0%, #E53935 55%, #B71C1C 100%);
+  background: var(--blue-lens-light);
 }
 
 .dex-a-btn:active:not(:disabled) {
-  transform: translateY(3px);
+  transform: translate(3px, 3px);
   box-shadow:
-    0 2px 0 #5a0000,
-    0 4px 8px rgba(0, 0, 0, 0.4),
-    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+    0 0 0 #113399,
+    0 0 0 1px var(--dex-outline);
 }
 
 .dex-a-btn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .dex-a-btn.scanning {
-  animation: btn-pulse 0.6s ease-in-out infinite alternate;
+  animation: btn-pulse 0.6s steps(2) infinite;
 }
 
 @keyframes btn-pulse {
-  from {
-    box-shadow: 0 5px 0 #5a0000, 0 8px 16px rgba(0, 0, 0, 0.5), 0 0 8px rgba(204, 0, 0, 0.3);
+
+  0%,
+  100% {
+    background: var(--blue-btn);
   }
 
-  to {
-    box-shadow: 0 5px 0 #5a0000, 0 8px 16px rgba(0, 0, 0, 0.5), 0 0 24px rgba(204, 0, 0, 0.8);
+  50% {
+    background: var(--blue-lens-light);
   }
 }
 
@@ -563,30 +582,30 @@ body {
 }
 
 .status-led {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  border: 2px solid var(--dex-outline);
 }
 
 .status-led.idle {
-  background: #555;
-  box-shadow: none;
+  background: #444;
 }
 
 .status-led.scanning {
-  background: #FF1744;
-  box-shadow: 0 0 8px #FF1744, 0 0 16px rgba(255, 23, 68, 0.5);
+  background: #FF2222;
+  animation: blink-dot 0.4s steps(1) infinite;
 }
 
 .status-led-label {
   font-family: var(--font-pixel);
-  font-size: 0.35rem;
+  font-size: 0.32rem;
   color: var(--text-dim);
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
 
-/* ── D-Pad ── */
+/* ── D-Pad – flat pixel cross ── */
 .dex-controls-right {
   display: flex;
   align-items: center;
@@ -595,19 +614,15 @@ body {
 
 .dex-dpad {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
 }
 
 .dex-dpad-h,
 .dex-dpad-v {
   position: absolute;
-  background: linear-gradient(135deg, #2a2a2a, #111);
-  border-radius: 3px;
-  box-shadow:
-    0 3px 0 #000,
-    0 4px 6px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: var(--blue-btn);
+  border: 2px solid var(--dex-outline);
 }
 
 .dex-dpad-h {
@@ -615,6 +630,8 @@ body {
   height: 34%;
   top: 33%;
   left: 0;
+  border-radius: 3px;
+  box-shadow: 2px 2px 0 #113399;
 }
 
 .dex-dpad-v {
@@ -622,6 +639,8 @@ body {
   height: 100%;
   top: 0;
   left: 33%;
+  border-radius: 3px;
+  box-shadow: 2px 2px 0 #113399;
 }
 
 .dex-dpad-centre {
@@ -630,9 +649,28 @@ body {
   height: 34%;
   top: 33%;
   left: 33%;
-  background: #1a1a1a;
-  border-radius: 2px;
+  background: var(--blue-btn);
   z-index: 1;
+}
+
+/* ── Green Data Bar – center of controls ── */
+.dex-data-bar {
+  flex: 1;
+  background: var(--green-bar);
+  border-radius: 4px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--dex-outline);
+  box-shadow: 2px 2px 0 #117733;
+}
+
+.dex-data-bar-text {
+  font-family: var(--font-pixel);
+  font-size: 0.36rem;
+  color: #003311;
+  letter-spacing: 0.1em;
 }
 
 /* ── Speaker Grill ── */
@@ -640,37 +678,54 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
-  padding-right: 6px;
+  gap: 3px;
+  padding-right: 4px;
 }
 
 .dex-speaker-line {
   height: 10px;
   width: 3px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
-  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 1px;
 }
 
-/* ── Green Data Bar ── */
-.dex-data-bar {
-  background: linear-gradient(90deg, var(--green-bar) 0%, var(--green-bar-light) 100%);
-  border-radius: 8px;
-  padding: 6px 14px;
+/* ════════════════════
+   Bottom Scan Button (Yellow)
+   Displayed BELOW the controls row
+════════════════════ */
+.dex-bottom-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    0 3px 0 #1a7a40,
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  padding: 2px 0 0;
 }
 
-.dex-data-bar-text {
+.btn-yellow-scan {
+  background: var(--yellow-btn);
+  border: 3px solid var(--dex-outline);
+  border-radius: 6px;
+  padding: 8px 32px;
   font-family: var(--font-pixel);
-  font-size: 0.4rem;
-  color: rgba(0, 40, 10, 0.85);
-  letter-spacing: 0.15em;
+  font-size: 0.55rem;
+  color: #333;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  box-shadow: 3px 3px 0 var(--yellow-btn-dark);
+  transition: transform 0.08s steps(1), box-shadow 0.08s steps(1);
+}
+
+.btn-yellow-scan:hover:not(:disabled) {
+  background: #FFdd22;
+}
+
+.btn-yellow-scan:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--yellow-btn-dark);
+}
+
+.btn-yellow-scan:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ════════════════════════════════════════
@@ -692,7 +747,6 @@ body {
   display: none;
 }
 
-/* Header */
 .dex-header {
   display: flex;
   align-items: flex-start;
@@ -705,7 +759,6 @@ body {
   font-size: 0.6rem;
   color: var(--text-label);
   line-height: 1.5;
-  text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
   flex: 1;
 }
 
@@ -714,10 +767,11 @@ body {
   font-size: 0.38rem;
   color: #000;
   padding: 3px 7px;
-  border-radius: 4px;
+  border-radius: 3px;
+  border: 2px solid var(--dex-outline);
   white-space: nowrap;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* Confidence bar */
@@ -736,17 +790,16 @@ body {
 
 .dex-confidence-track {
   flex: 1;
-  height: 6px;
+  height: 7px;
   background: #1e2d1e;
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
   border: 1px solid #2a3d2a;
 }
 
 .dex-confidence-fill {
   height: 100%;
-  border-radius: 3px;
-  box-shadow: 0 0 6px currentColor;
+  border-radius: 1px;
 }
 
 .dex-confidence-pct {
@@ -757,14 +810,12 @@ body {
   text-align: right;
 }
 
-/* Divider */
 .dex-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #2a4a2a 20%, #00ff88 50%, #2a4a2a 80%, transparent);
-  opacity: 0.5;
+  height: 2px;
+  background: #00ff88;
+  opacity: 0.3;
 }
 
-/* Lore text */
 .dex-lore-wrap {
   display: flex;
   flex-direction: column;
@@ -784,7 +835,6 @@ body {
   font-size: 0.62rem;
   color: #b8e4b8;
   line-height: 1.65;
-  letter-spacing: 0.01em;
 }
 
 .dex-cursor {
@@ -806,23 +856,22 @@ body {
   }
 }
 
-/* Scan Again button */
 .btn-scan-again {
   margin-top: auto;
   padding: 7px 0;
   background: none;
-  border: 1px solid #2a5a2a;
-  border-radius: 5px;
+  border: 2px solid #2a5a2a;
+  border-radius: 3px;
   color: var(--text-label);
   font-family: var(--font-pixel);
   font-size: 0.42rem;
   cursor: pointer;
   letter-spacing: 0.08em;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.1s steps(1);
 }
 
 .btn-scan-again:hover {
-  background: rgba(0, 255, 136, 0.07);
+  background: rgba(0, 255, 136, 0.1);
   border-color: var(--text-label);
 }
 
@@ -834,15 +883,15 @@ body {
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(183, 28, 28, 0.93);
+  background: #BB0000;
   color: #fff;
   font-family: var(--font-mono);
   font-size: 0.7rem;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 4px;
+  border: 2px solid var(--dex-outline);
   z-index: 9999;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 3px 3px 0 #440000;
   white-space: nowrap;
   max-width: 90vw;
   overflow: hidden;
@@ -854,27 +903,27 @@ body {
 ════════════════════ */
 @media (max-height: 700px) {
   .dex-shell {
-    gap: 8px;
-    padding: 12px 14px 10px;
+    gap: 6px;
+    padding: 10px 12px 10px;
   }
 
   .dex-lens {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
   }
 
   .dex-a-btn {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
   }
 
   .dex-dpad {
-    width: 54px;
-    height: 54px;
+    width: 52px;
+    height: 52px;
   }
 
   .dex-species {
-    font-size: 0.52rem;
+    font-size: 0.5rem;
   }
 
   .dex-lore-text {
@@ -883,9 +932,46 @@ body {
 }
 
 @media (prefers-color-scheme: light) {
-
-  /* Pokédex is designed dark-first; keep it that way */
   html {
-    background: #1a0000;
+    background: var(--dex-red-dark);
+  }
+
+  @media (min-width: 768px) {
+    html {
+      background: #111111;
+    }
+  }
+}
+
+/* ════════════════════
+   Desktop Banner
+════════════════════ */
+.desktop-banner {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .desktop-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    padding: 11px 22px;
+    max-width: 380px;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .desktop-banner-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .desktop-banner-text {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.45;
   }
 }
