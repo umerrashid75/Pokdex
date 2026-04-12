@@ -356,7 +356,7 @@ for test_animal in ["Tiger", "Octopus", "Eagle"]:
 # =============================================================
 # ██████  DONE
 # =============================================================
-print("\n\n🎉 All done! Download these files from /kaggle/working/:")
+print("\n\n All done! Download these files from /kaggle/working/:")
 print("  ├── pokedex_classifier.pth   ← drop into backend/")
 print("  ├── class_labels.json        ← drop into backend/")
 print("  └── pokedex_gpt2/            ← drop entire folder into backend/")
