@@ -12,15 +12,18 @@ import { motion } from 'framer-motion'
 
 // Map type strings to accent colours matching the reference image palette
 const TYPE_COLORS = {
-    Mammal: '#E8A000',
-    Bird: '#4FC3F7',
-    Fish: '#0288D1',
-    Reptile: '#66BB6A',
-    Unknown: '#9E9E9E',
+    mammal: '#E8A000',
+    bird: '#4FC3F7',
+    fish: '#0288D1',
+    aquatic: '#0288D1',
+    reptile: '#66BB6A',
+    predator: '#EF5350',
+    bug: '#8BC34A',
+    normal: '#9E9E9E',
 }
 
 export default function DexEntry({ result, onScanAgain }) {
-    const { display_name, type, confidence, dex_entry } = result
+    const { name, type, confidence, lore, fun_fact } = result
 
     const [displayedText, setDisplayedText] = useState('')
     const indexRef = useRef(0)
@@ -33,18 +36,18 @@ export default function DexEntry({ result, onScanAgain }) {
 
         timerRef.current = setInterval(() => {
             indexRef.current += 1
-            setDisplayedText(dex_entry.slice(0, indexRef.current))
+            setDisplayedText(lore.slice(0, indexRef.current))
 
-            if (indexRef.current >= dex_entry.length) {
+            if (indexRef.current >= lore.length) {
                 clearInterval(timerRef.current)
             }
         }, 28) // ~28 ms per character ≈ comfortable reading speed
 
         return () => clearInterval(timerRef.current)
-    }, [dex_entry])
+    }, [lore])
 
-    const typeColor = TYPE_COLORS[type] ?? TYPE_COLORS.Unknown
-    const confidencePct = Math.round(confidence * 100)
+    const typeColor = TYPE_COLORS[type?.toLowerCase?.() || 'normal'] ?? TYPE_COLORS.normal
+    const confidencePct = Math.round(confidence)
 
     return (
         <motion.div
@@ -56,7 +59,7 @@ export default function DexEntry({ result, onScanAgain }) {
         >
             {/* ── Header ── */}
             <div className="dex-header">
-                <h1 className="dex-species">{display_name}</h1>
+                <h1 className="dex-species">{name}</h1>
                 <span className="dex-type-badge" style={{ background: typeColor }}>
                     {type}
                 </span>
@@ -85,11 +88,18 @@ export default function DexEntry({ result, onScanAgain }) {
                 <span className="dex-lore-title">DEX ENTRY</span>
                 <p className="dex-lore-text">
                     {displayedText}
-                    {displayedText.length < dex_entry.length && (
+                    {displayedText.length < lore.length && (
                         <span className="dex-cursor">█</span>
                     )}
                 </p>
             </div>
+
+            {fun_fact && (
+                <div className="dex-fact-wrap">
+                    <span className="dex-lore-title">FUN FACT</span>
+                    <p className="dex-fact-text">{fun_fact}</p>
+                </div>
+            )}
 
             {/* ── Scan again ── */}
             <button className="btn-scan-again" onClick={onScanAgain}>

@@ -11,6 +11,7 @@ from app.services.ml_service import ml_service
 log = logging.getLogger("pokedex")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize and load models
@@ -18,25 +19,24 @@ async def lifespan(app: FastAPI):
     yield
     log.info("Shutting down...")
 
-app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.VERSION,
-    lifespan=lifespan
-)
+
+app = FastAPI(title=settings.APP_NAME, version=settings.VERSION, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origin_list(),
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 async def root():
     return {
         "status": "online",
         "classifier": ml_service.model_type,
-        "lore": "gpt2" if ml_service.gpt2 else "static",
+        "lore": "textgen" if ml_service.text_model else "static",
     }
+
 
 app.include_router(api_router)

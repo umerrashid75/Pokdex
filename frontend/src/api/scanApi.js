@@ -9,7 +9,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || ''
 
 /**
  * @param {Blob} imageBlob  – Raw image blob from the canvas capture
- * @returns {Promise<{label, display_name, type, confidence, dex_entry}>}
+ * @returns {Promise<{name, type, confidence, lore, fun_fact, lore_source, model}>}
  */
 export async function scanImage(imageBlob) {
     const formData = new FormData()

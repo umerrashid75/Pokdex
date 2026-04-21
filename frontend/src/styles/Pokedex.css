@@ -823,6 +823,23 @@ body {
   flex: 1;
 }
 
+.dex-fact-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  border-radius: 3px;
+  padding: 6px;
+}
+
+.dex-fact-text {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  color: #cbeed1;
+  line-height: 1.55;
+}
+
 .dex-lore-title {
   font-family: var(--font-pixel);
   font-size: 0.3rem;
